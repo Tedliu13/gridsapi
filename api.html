@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCCIPGridsTemp 資料擷取</title>
+</head>
+<body>
+    <h1>TCCIPGridsTemp 資料擷取</h1>
+
+    <label for="year">年份:</label>
+    <input type="text" id="year">
+
+    <label for="month">月份:</label>
+    <input type="text" id="month">
+
+    <label for="day">日期:</label>
+    <input type="text" id="day">
+
+    <button id="fetch-data">開始執行</button>
+
+    <div id="message"></div>
+
+    <script>
+        document.getElementById('fetch-data').addEventListener('click', function() {
+            var year = document.getElementById('year').value;
+            var month = document.getElementById('month').value.padStart(2, '0');
+            var day = document.getElementById('day').value.padStart(2, '0');
+
+            // 使用CORS代理解决跨域问题
+            const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+            const apiUrl = `https://dataapi.ncdr.nat.gov.tw/apiV2/ClimateChange/ObsTempByDay?YYYY=${year}&MM=${month}&DD=${day}`;
+            const fullUrl = proxyUrl + apiUrl;
+
+            fetch(fullUrl, {
+                method: 'GET',
+                headers: {
+                    'token': '91e4bdc5-eee9-4104-872b-4c5ef41c24f1'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+                document.getElementById('message').textContent = '資料擷取成功！請查看控制台以获取详细信息。';
+            })
+            .catch(error => {
+                console.error('程式執行時發生錯誤:', error);
+                document.getElementById('message').textContent = `程式執行時發生錯誤：${error.message}`;
+            });
+        });
+    </script>
+</body>
+</html>
