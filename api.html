@@ -30,7 +30,7 @@
             // 使用CORS代理解决跨域问题
             const proxyUrl = "https://cors-anywhere.herokuapp.com/";
             const apiUrl = `https://dataapi.ncdr.nat.gov.tw/apiV2/ClimateChange/ObsTempByDay?YYYY=${year}&MM=${month}&DD=${day}`;
-            const fullUrl = proxyUrl + apiUrl;
+            const fullUrl = apiUrl;
 
             fetch(fullUrl, {
                 method: 'GET',
