@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCCIPGridsTemp 資料擷取</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            padding: 20px;
+            max-width: 600px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input {
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            width: 100%;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            margin-top: 20px;
+        }
+        #map {
+            margin-top: 20px;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>TCCIPGridsTemp 資料擷取</h1>
+    <label for="year">年份:</label>
+    <input type="text" id="year">
+
+    <label for="month">月份:</label>
+    <input type="text" id="month">
+
+    <label for="day">日期:</label>
+    <input type="text" id="day">
+
+    <button onclick="runProgram()">開始執行</button>
+
+    <div id="message" class="message"></div>
+    <canvas id="map" width="800" height="600"></canvas>
+
+    <script>
+        async function runProgram() {
+            const year = document.getElementById('year').value;
+            const month = document.getElementById('month').value.padStart(2, '0');
+            const day = document.getElementById('day').value.padStart(2, '0');
+            const messageDiv = document.getElementById('message');
+            const canvas = document.getElementById('map');
+            const ctx = canvas.getContext('2d');
+            messageDiv.innerHTML = '';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            try {
+                const url = `https://dataapi.ncdr.nat.gov.tw/apiV2/ClimateChange/ObsTempByDay?YYYY=${year}&MM=${month}&DD=${day}`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Token': '91e4bdc5-eee9-4104-872b-4c5ef41c24f1'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('API 請求失敗');
+                }
+
+                const data = await response.json();
+                const filteredData = data.filter(item => item.TempValue !== 'NAN');
+
+                const gridSize = 0.05;
+                const minTemp = Math.min(...filteredData.map(item => parseFloat(item.TempValue)));
+                const maxTemp = Math.max(...filteredData.map(item => parseFloat(item.TempValue)));
+
+                function tempToColor(temp) {
+                    const ratio = (temp - minTemp) / (maxTemp - minTemp);
+                    const blue = Math.max(0, 255 - 255 * ratio);
+                    const red = Math.max(0, 255 * ratio);
+                    return `rgb(${red}, 0, ${blue})`;
+                }
+
+                filteredData.forEach(item => {
+                    const lon = parseFloat(item.WGS84_Lon);
+                    const lat = parseFloat(item.WGS84_Lat);
+                    const temp = parseFloat(item.TempValue);
+
+                    const x = (lon + 180) * (canvas.width / 360);
+                    const y = (90 - lat) * (canvas.height / 180);
+
+                    ctx.fillStyle = tempToColor(temp);
+                    ctx.fillRect(x - gridSize * 10, y - gridSize * 10, gridSize * 20, gridSize * 20);
+                });
+
+                messageDiv.innerHTML = '資料擷取並繪圖完成！';
+
+            } catch (error) {
+                messageDiv.innerHTML = `程式執行時發生錯誤：${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
